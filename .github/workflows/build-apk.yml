@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,9 +27,20 @@ jobs:
       - name: Compilar APK
         run: chmod +x ./gradlew && ./gradlew assembleDebug --stacktrace
 
-      - name: Subir APK
+      - name: Nombre corto para el APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk nova.apk
+
+      - name: Subir APK como artefacto
         uses: actions/upload-artifact@v4
         with:
           name: nova-launcher-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: nova.apk
           if-no-files-found: error
+
+      - name: Publicar en Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Nova build ${{ github.run_number }}
+          files: nova.apk
+          make_latest: true
